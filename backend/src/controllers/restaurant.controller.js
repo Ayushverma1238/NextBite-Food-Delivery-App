@@ -94,11 +94,10 @@ const createRestaurant = asyncHandler(async (req, res) => {
 const updateRestaurantDetails = asyncHandler(async (req, res) => {
   const ownerId = req.user._id;
 
-  console.log("req body", req.body)
 
   const restaurant = await Restaurant.findOne({
     owner: ownerId,
-    isDeleted:false
+    isDeleted: false,
   });
 
   if (!restaurant) {
@@ -248,260 +247,436 @@ const deleteRestaurant = asyncHandler(async (req, res) => {
 // show restaurant owner dashboard analytics and plateform analytics
 
 const getOwnerDashboard = asyncHandler(async (req, res) => {
+  const ownerId = req.user._id;
 
-    const ownerId = req.user._id;
+  const restaurant = await Restaurant.findOne({
+    owner: ownerId,
+    isDeleted: false,
+  });
 
-    const restaurant = await Restaurant.findOne({
-        owner: ownerId,
-        isDeleted: false
-    });
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
 
-    if (!restaurant) {
-        throw new ApiError(404, "Restaurant not found");
-    }
+  const restaurantId = restaurant._id;
 
-    const restaurantId = restaurant._id;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-    const totalFoods = await Food.countDocuments({
+  const lastWeek = new Date();
+  lastWeek.setDate(lastWeek.getDate() - 6);
+  lastWeek.setHours(0, 0, 0, 0);
+
+  // =============================
+  // Dashboard Statistics
+  // =============================
+
+  const [
+    totalFoods,
+    totalOrders,
+    pendingOrders,
+    preparingOrders,
+    outForDeliveryOrders,
+    completedOrders,
+    cancelledOrders,
+    todayOrders,
+  ] = await Promise.all([
+    Food.countDocuments({
+      restaurant: restaurantId,
+      isDeleted: false,
+    }),
+
+    Order.countDocuments({
+      restaurant: restaurantId,
+    }),
+
+    Order.countDocuments({
+      restaurant: restaurantId,
+      orderStatus: "PENDING",
+    }),
+
+    Order.countDocuments({
+      restaurant: restaurantId,
+      orderStatus: "PREPARING",
+    }),
+
+    Order.countDocuments({
+      restaurant: restaurantId,
+      orderStatus: "OUT_FOR_DELIVERY",
+    }),
+
+    Order.countDocuments({
+      restaurant: restaurantId,
+      orderStatus: "DELIVERED",
+    }),
+
+    Order.countDocuments({
+      restaurant: restaurantId,
+      orderStatus: "CANCELLED",
+    }),
+
+    Order.countDocuments({
+      restaurant: restaurantId,
+      createdAt: {
+        $gte: today,
+      },
+    }),
+  ]);
+
+  // =============================
+  // Revenue
+  // =============================
+
+  const revenueData = await Order.aggregate([
+    {
+      $match: {
         restaurant: restaurantId,
-        isDeleted: false
-    });
-
-    const totalOrders = await Order.countDocuments({
-        restaurant: restaurantId
-    });
-
-    const pendingOrders = await Order.countDocuments({
-        restaurant: restaurantId,
-        orderStatus: "PENDING"
-    });
-
-    const completedOrders = await Order.countDocuments({
-        restaurant: restaurantId,
-        orderStatus: "DELIVERED"
-    });
-
-    const cancelledOrders = await Order.countDocuments({
-        restaurant: restaurantId,
-        orderStatus: "CANCELLED"
-    });
-
-    const today = new Date();
-
-    today.setHours(0,0,0,0);
-
-    const todayOrders = await Order.countDocuments({
-        restaurant: restaurantId,
-        createdAt:{
-            $gte:today
-        }
-    });
-
-    const revenue = await Order.aggregate([
-        {
-            $match:{
-                restaurant:restaurantId,
-                paymentStatus:"SUCCESS"
-            }
+        paymentStatus: "PAID",
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        totalRevenue: {
+          $sum: "$totalAmount",
         },
-        {
-            $group:{
-                _id:null,
-                totalRevenue:{
-                    $sum:"$totalAmount"
-                }
-            }
-        }
-    ]);
+      },
+    },
+  ]);
 
-    const totalRevenue = revenue.length ? revenue[0].totalRevenue : 0;
+  const totalRevenue = revenueData.length > 0 ? revenueData[0].totalRevenue : 0;
 
-    const todayRevenueData = await Order.aggregate([
-        {
-            $match:{
-                restaurant:restaurantId,
-                paymentStatus:"SUCCESS",
-                createdAt:{
-                    $gte:today
-                }
-            }
+  const todayRevenueData = await Order.aggregate([
+    {
+      $match: {
+        restaurant: restaurantId,
+        paymentStatus: "PAID",
+        createdAt: {
+          $gte: today,
         },
-        {
-            $group:{
-                _id:null,
-                revenue:{
-                    $sum:"$totalAmount"
-                }
-            }
-        }
-    ]);
-
-    const todayRevenue = todayRevenueData.length
-        ? todayRevenueData[0].revenue
-        : 0;
-
-    const monthlyRevenue = await Order.aggregate([
-        {
-            $match:{
-                restaurant:restaurantId,
-                paymentStatus:"SUCCESS"
-            }
+      },
+    },
+    {
+      $group: {
+        _id: null,
+        revenue: {
+          $sum: "$totalAmount",
         },
-        {
-            $group:{
-                _id:{
-                    month:{
-                        $month:"$createdAt"
-                    }
-                },
-                revenue:{
-                    $sum:"$totalAmount"
-                }
-            }
-        },
-        {
-            $sort:{
-                "_id.month":1
-            }
-        }
-    ]);
+      },
+    },
+  ]);
 
-    const recentOrders = await Order.find({
-        restaurant:restaurantId
+  const todayRevenue =
+    todayRevenueData.length > 0 ? todayRevenueData[0].revenue : 0;
+
+  // =============================
+  // Monthly Revenue
+  // =============================
+
+  const monthlyRevenueDB = await Order.aggregate([
+    {
+      $match: {
+        restaurant: restaurantId,
+        paymentStatus: "PAID",
+      },
+    },
+    {
+      $group: {
+        _id: {
+          month: {
+            $month: "$createdAt",
+          },
+        },
+        revenue: {
+          $sum: "$totalAmount",
+        },
+      },
+    },
+  ]);
+
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
+
+  const monthlyRevenue = months.map((month, index) => {
+    const found = monthlyRevenueDB.find((item) => item._id.month === index + 1);
+
+    return {
+      month,
+      revenue: found ? found.revenue : 0,
+    };
+  });
+
+  // =============================
+  // Weekly Revenue
+  // =============================
+
+  const weeklyRevenue = await Order.aggregate([
+    {
+      $match: {
+        restaurant: restaurantId,
+        paymentStatus: "PAID",
+        createdAt: {
+          $gte: lastWeek,
+        },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          day: {
+            $dayOfWeek: "$createdAt",
+          },
+        },
+        revenue: {
+          $sum: "$totalAmount",
+        },
+      },
+    },
+    {
+      $sort: {
+        "_id.day": 1,
+      },
+    },
+  ]);
+
+  // =============================
+  // Order Status Analytics
+  // =============================
+
+  const orderStatusAnalytics = await Order.aggregate([
+    {
+      $match: {
+        restaurant: restaurantId,
+      },
+    },
+    {
+      $group: {
+        _id: "$orderStatus",
+        count: {
+          $sum: 1,
+        },
+      },
+    },
+  ]);
+
+  // =============================
+  // Top Selling Foods
+  // =============================
+
+  const topFoods = await Order.aggregate([
+    {
+      $match: {
+        restaurant: restaurantId,
+      },
+    },
+    {
+      $unwind: "$items",
+    },
+    {
+      $group: {
+        _id: "$items.food",
+        name: {
+          $first: "$items.name",
+        },
+        image: {
+          $first: "$items.image",
+        },
+        totalSold: {
+          $sum: "$items.quantity",
+        },
+      },
+    },
+    {
+      $sort: {
+        totalSold: -1,
+      },
+    },
+    {
+      $limit: 5,
+    },
+  ]);
+
+  // =============================
+  // Recent Orders
+  // =============================
+
+  const recentOrders = await Order.find({
+    restaurant: restaurantId,
+  })
+    .populate("owner", "name avatar")
+    .populate("address")
+    .sort({
+      createdAt: -1,
     })
-    .populate("owner","name")
-    .sort({createdAt:-1})
     .limit(10);
 
-    res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                restaurant,
-                totalFoods,
-                totalOrders,
-                pendingOrders,
-                completedOrders,
-                cancelledOrders,
-                todayOrders,
-                todayRevenue,
-                totalRevenue,
-                monthlyRevenue,
-                recentOrders
-            },
-            "Dashboard fetched successfully"
-        )
-    );
+  // =============================
+  // Response
+  // =============================
 
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        restaurant,
+
+        statistics: {
+          totalFoods,
+          totalOrders,
+          todayOrders,
+          pendingOrders,
+          preparingOrders,
+          outForDeliveryOrders,
+          completedOrders,
+          cancelledOrders,
+          totalRevenue,
+          todayRevenue,
+        },
+
+        monthlyRevenue,
+
+        weeklyRevenue,
+
+        orderStatusAnalytics,
+
+        topFoods,
+
+        recentOrders,
+      },
+      "Dashboard analytics fetched successfully",
+    ),
+  );
 });
-
 
 const getOwnerAnalytics = asyncHandler(async (req, res) => {
-    const ownerId = req.user._id;
+  const ownerId = req.user._id;
 
-    const { year = new Date().getFullYear() } = req.query;
+  const { year = new Date().getFullYear() } = req.query;
 
-    const restaurant = await Restaurant.findOne({
-        owner: ownerId,
-        isDeleted: false,
-    });
+  const restaurant = await Restaurant.findOne({
+    owner: ownerId,
+    isDeleted: false,
+  });
 
-    if (!restaurant) {
-        throw new ApiError(404, "Restaurant not found");
-    }
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
 
-    const startDate = new Date(`${year}-01-01`);
-    const endDate = new Date(`${Number(year) + 1}-01-01`);
+  const startDate = new Date(`${year}-01-01`);
+  const endDate = new Date(`${Number(year) + 1}-01-01`);
 
-    const analytics = await Order.aggregate([
-        {
-            $match: {
-                restaurant: new mongoose.Types.ObjectId(restaurant._id),
-                paymentStatus: "SUCCESS", // or orderStatus: "DELIVERED"
-                createdAt: {
-                    $gte: startDate,
-                    $lt: endDate,
-                },
-            },
+  const analytics = await Order.aggregate([
+    {
+      $match: {
+        restaurant: new mongoose.Types.ObjectId(restaurant._id),
+        paymentStatus: "PAID", // or orderStatus: "DELIVERED"
+        createdAt: {
+          $gte: startDate,
+          $lt: endDate,
         },
-        {
-            $group: {
-                _id: {
-                    month: { $month: "$createdAt" },
-                },
-                totalOrders: {
-                    $sum: 1,
-                },
-                totalRevenue: {
-                    $sum: "$totalAmount",
-                },
-            },
+      },
+    },
+    {
+      $group: {
+        _id: {
+          month: { $month: "$createdAt" },
         },
-        {
-            $sort: {
-                "_id.month": 1,
-            },
+        totalOrders: {
+          $sum: 1,
         },
-    ]);
+        totalRevenue: {
+          $sum: "$totalAmount",
+        },
+      },
+    },
+    {
+      $sort: {
+        "_id.month": 1,
+      },
+    },
+  ]);
 
-    // Month names
-    const months = [
-        "Jan",
-        "Feb",
-        "Mar",
-        "Apr",
-        "May",
-        "Jun",
-        "Jul",
-        "Aug",
-        "Sep",
-        "Oct",
-        "Nov",
-        "Dec",
-    ];
+  // Month names
+  const months = [
+    "Jan",
+    "Feb",
+    "Mar",
+    "Apr",
+    "May",
+    "Jun",
+    "Jul",
+    "Aug",
+    "Sep",
+    "Oct",
+    "Nov",
+    "Dec",
+  ];
 
-    // Create all 12 months with default values
-    const monthlyAnalytics = months.map((month, index) => ({
-        month,
-        totalOrders: 0,
-        totalRevenue: 0,
-    }));
+  // Create all 12 months with default values
+  const monthlyAnalytics = months.map((month, index) => ({
+    month,
+    totalOrders: 0,
+    totalRevenue: 0,
+  }));
 
-    // Fill actual data
-    analytics.forEach((item) => {
-        const monthIndex = item._id.month - 1;
+  // Fill actual data
+  analytics.forEach((item) => {
+    const monthIndex = item._id.month - 1;
 
-        monthlyAnalytics[monthIndex] = {
-            month: months[monthIndex],
-            totalOrders: item.totalOrders,
-            totalRevenue: item.totalRevenue,
-        };
-    });
+    monthlyAnalytics[monthIndex] = {
+      month: months[monthIndex],
+      totalOrders: item.totalOrders,
+      totalRevenue: item.totalRevenue,
+    };
+  });
 
-    const totalOrders = monthlyAnalytics.reduce(
-        (sum, month) => sum + month.totalOrders,
-        0
-    );
+  const totalOrders = monthlyAnalytics.reduce(
+    (sum, month) => sum + month.totalOrders,
+    0,
+  );
 
-    const totalRevenue = monthlyAnalytics.reduce(
-        (sum, month) => sum + month.totalRevenue,
-        0
-    );
+  const totalRevenue = monthlyAnalytics.reduce(
+    (sum, month) => sum + month.totalRevenue,
+    0,
+  );
 
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                year: Number(year),
-                totalOrders,
-                totalRevenue,
-                monthlyAnalytics,
-            },
-            "Owner analytics fetched successfully"
-        )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        year: Number(year),
+        totalOrders,
+        totalRevenue,
+        monthlyAnalytics,
+      },
+      "Owner analytics fetched successfully",
+    ),
+  );
 });
 
+const getRestaurantDetails = asyncHandler(async (req, res) => {
+  const { restaurantId } = req.params;
+  const restaurant = await Restaurant.findById(restaurantId);
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+  return res
+    .status(200)
+    .json(new ApiResponse(200, restaurant, "Restaurant detail fetched"));
+});
 
 export {
   createRestaurant,
@@ -510,5 +685,5 @@ export {
   toggleOpen,
   deleteRestaurant,
   getOwnerDashboard,
-  getOwnerAnalytics
+  getOwnerAnalytics,
 };

@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import Order from "../models/order.model.js";
 import Cart from "../models/cart.model.js";
 import Address from "../models/address.model.js";
+import Restaurant from '../models/restaurant.model.js'
 import { ApiError } from "../utils/ApiError.js";
 import { ApiResponse } from "../utils/ApiResponse.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
@@ -64,6 +65,8 @@ const createOrder = asyncHandler(async (req, res) => {
       city: address.city,
       state: address.state,
       pincode: address.pincode,
+      latitude: address.latitude,
+      longitude: address.longitude,
     },
 
     items: orderItems,
@@ -100,18 +103,6 @@ const getAllPlacedOrder = asyncHandler(async (req, res) => {
         localField: "address",
         foreignField: "_id",
         as: "address",
-        pipeline: [
-          {
-            $project: {
-              address: 1,
-              city: 1,
-              state: 1,
-              pincode: 1,
-              landmark: 1,
-              phone: 1,
-            },
-          },
-        ],
       },
     },
 
@@ -225,6 +216,9 @@ const deleteOrder = asyncHandler(async (req, res) => {
 const getOrderDetails = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
 
+  console.log("URL:", req.originalUrl);
+console.log("Params:", req.params);
+
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError(400, "Invalid order id");
   }
@@ -267,18 +261,6 @@ const getOrderDetails = asyncHandler(async (req, res) => {
         localField: "address",
         foreignField: "_id",
         as: "address",
-        pipeline: [
-          {
-            $project: {
-              address: 1,
-              city: 1,
-              state: 1,
-              pincode: 1,
-              phone: 1,
-              landmark: 1,
-            },
-          },
-        ],
       },
     },
     {
@@ -340,10 +322,116 @@ const getOrderDetails = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, order[0], "Order details fetched successfully"));
 });
 
+const changeOrderStatus = asyncHandler(async (req, res) => {
+  const { orderId } = req.params;
+  const { orderStatus } = req.body;
+
+  if (!mongoose.Types.ObjectId.isValid(orderId)) {
+    throw new ApiError(400, "Invalid Order ID");
+  }
+
+  const allowedStatus = [
+    "PENDING",
+    "CONFIRMED",
+    "PREPARING",
+    "OUT_FOR_DELIVERY",
+    "DELIVERED",
+    "CANCELLED",
+  ];
+
+  if (!allowedStatus.includes(orderStatus)) {
+    throw new ApiError(400, "Invalid order status");
+  }
+
+  const order = await Order.findById(orderId);
+
+  if (!order) {
+    throw new ApiError(404, "Order not found");
+  }
+
+  // ✅ Add this block HERE
+  const nextStatus = {
+    PENDING: "CONFIRMED",
+    CONFIRMED: "PREPARING",
+    PREPARING: "OUT_FOR_DELIVERY",
+    OUT_FOR_DELIVERY: "DELIVERED",
+    DELIVERED: null,
+  };
+
+  if (nextStatus[order.orderStatus] !== orderStatus) {
+    throw new ApiError(
+      400,
+      `Order can only move from ${order.orderStatus} to ${nextStatus[order.orderStatus]}`
+    );
+  }
+
+  // Update status
+  order.orderStatus = orderStatus;
+
+  switch (orderStatus) {
+    case "CONFIRMED":
+      order.acceptedAt = new Date();
+      break;
+
+    case "PREPARING":
+      order.preparingAt = new Date();
+      break;
+
+    case "OUT_FOR_DELIVERY":
+      order.outForDeliveryAt = new Date();
+      break;
+
+    case "DELIVERED":
+      order.deliveredAt = new Date();
+      break;
+
+    default:
+      break;
+  }
+
+  await order.save();
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      order,
+      "Order status updated successfully"
+    )
+  );
+});
+
+const getOwnerOrder = asyncHandler(async (req, res) => {
+  const ownerId = req.user._id;
+
+  const restaurant = await Restaurant.findOne({
+    owner: ownerId,
+    isDeleted: false,
+  });
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  const orders = await Order.find({
+    restaurant: restaurant._id,
+  })
+    .populate("owner", "fullName phone email avatar")
+    .populate("address")
+    .sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, orders, "Restaurant orders fetched successfully"),
+    );
+});
+
 export {
   createOrder,
   getAllPlacedOrder,
   cancelOrder,
   deleteOrder,
   getOrderDetails,
+  changeOrderStatus,
+  getOwnerOrder,
 };

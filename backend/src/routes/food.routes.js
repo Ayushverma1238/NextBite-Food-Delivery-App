@@ -4,7 +4,9 @@ import {
   changeAvailabilityFood,
   deleteFood,
   getAllFood,
+  getFoodByCategory,
   getFoodDetail,
+  getOwnerFoods,
   getRestaurantMenu,
   updateFoodDetail,
 } from "../controllers/food.controller.js";
@@ -41,5 +43,7 @@ router.get("/", getAllFood);
 router.get("/:foodId/detail", getFoodDetail);
 
 router.get("/:restaurantId/menu", getRestaurantMenu);
+router.get("/:category/category-food", getFoodByCategory)
+router.get('/owner', verifyJWT, verifyOwner, getOwnerFoods)
 
 export default router;

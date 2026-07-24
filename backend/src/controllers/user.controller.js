@@ -4,6 +4,7 @@ import { ApiResponse } from "../utils/ApiResponse.js";
 import "../config/env.js";
 import User from "../models/user.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import Restaurant from "../models/restaurant.model.js";
 
 import jwt from "jsonwebtoken";
 
@@ -34,6 +35,8 @@ const registerUser = asyncHandler(async (req, res) => {
   if ([name, email, phone, password].some((field) => field.trim() === "")) {
     throw new ApiError(400, "All fields are required");
   }
+  console.log(req.file);
+  console.log(req.body);
 
   const existingUser = await User.findOne({
     $or: [{ email }, { phone }],
@@ -201,14 +204,30 @@ const changePassword = asyncHandler(async (req, res) => {
 });
 
 const getCurrUser = asyncHandler(async (req, res) => {
-  const user = await User.findById(req.user?._id).select("-password -refreshToken");
+  const user = await User.findById(req.user?._id).select(
+    "-password -refreshToken",
+  );
   if (!user) {
     throw new ApiError(404, "User not found");
   }
 
+  return res.status(200).json(new ApiResponse(200, user, "User fetched"));
+});
+
+const getAllRestaurant = asyncHandler(async (req, res) => {
+  const restaurants = await Restaurant.find({
+    isDeleted:false
+  }).sort({ createdAt: 1 }); // 1 = Ascending, -1 = Descending
+
+  if (!restaurants.length) {
+    throw new ApiError(404, "No restaurants found");
+  }
+
   return res
     .status(200)
-    .json(new ApiResponse(200, user, "User fetched"));
+    .json(
+      new ApiResponse(200, restaurants, "Restaurants fetched successfully"),
+    );
 });
 
 export {
@@ -218,4 +237,5 @@ export {
   refreshAccessToken,
   changePassword,
   getCurrUser,
+  getAllRestaurant,
 };

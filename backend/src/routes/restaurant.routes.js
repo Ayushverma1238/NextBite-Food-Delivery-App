@@ -7,8 +7,8 @@ const router = Router()
 router.use(verifyJWT)
 
 router.post("/", verifyAdmin, upload.single("restaurantImage"), createRestaurant);
-router.patch("/", verifyOwner,upload.single("restaurantImage") ,updateRestaurantDetails)
-router.get("/", verifyOwner, getMyRestaurant)
+router.put("/update", verifyOwner,upload.single("restaurantImage") ,updateRestaurantDetails)
+router.get("/", verifyOwner,  getMyRestaurant)
 router.patch("/toggle-open", verifyOwner, toggleOpen)
 router.patch("/:restaurantId/delete", deleteRestaurant)
 router.get("/dashboard", verifyOwner, getOwnerDashboard)

@@ -115,17 +115,14 @@ const getCart = asyncHandler(async (req, res) => {
     },
   ]);
 
-  if (!cart.length) {
-    throw new ApiError(404, "Cart is empty");
-  }
-
   return res
     .status(200)
     .json(new ApiResponse(200, cart[0], "Cart fetched successfully"));
 });
 
 const addToCart = asyncHandler(async (req, res) => {
-  const { quantity = 1 } = req.body;
+  let { quantity = 1 } = req.body;
+  quantity = Number(quantity);
   const { foodId } = req.params;
   const userId = req.user._id;
 
@@ -205,9 +202,7 @@ const removeCartItem = asyncHandler(async (req, res) => {
   }
 
   // Find the item before removing it
-  const item = cart.items.find(
-    (item) => item.food.toString() === foodId
-  );
+  const item = cart.items.find((item) => item.food.toString() === foodId);
 
   if (!item) {
     throw new ApiError(404, "Item not found in cart");
@@ -224,9 +219,7 @@ const removeCartItem = asyncHandler(async (req, res) => {
   cart.totalAmount -= food.price * item.quantity;
 
   // Remove item
-  cart.items = cart.items.filter(
-    (item) => item.food.toString() !== foodId
-  );
+  cart.items = cart.items.filter((item) => item.food.toString() !== foodId);
 
   // Delete cart if empty
   if (cart.items.length === 0) {
@@ -276,9 +269,7 @@ const updateCartQuantity = asyncHandler(async (req, res) => {
     throw new ApiError(404, "Cart not found");
   }
 
-  const item = cart.items.find(
-    (item) => item.food.toString() === foodId
-  );
+  const item = cart.items.find((item) => item.food.toString() === foodId);
 
   if (!item) {
     throw new ApiError(404, "Food not found in cart");
@@ -301,9 +292,7 @@ const updateCartQuantity = asyncHandler(async (req, res) => {
 
   await cart.save();
 
-  return res.status(200).json(
-    new ApiResponse(200, cart, "Quantity updated")
-  );
+  return res.status(200).json(new ApiResponse(200, cart, "Quantity updated"));
 });
 
 export { getCart, addToCart, removeCartItem, clearCart, updateCartQuantity };

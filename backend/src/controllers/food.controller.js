@@ -6,7 +6,6 @@ import Restaurant from "../models/restaurant.model.js";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 import mongoose from "mongoose";
 
-
 const addFoodIntoRestaurant = asyncHandler(async (req, res) => {
   const ownerId = req.user?._id;
 
@@ -238,75 +237,123 @@ const getAllFood = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, foods, "Foods fetched successfully"));
 });
 
-const getFoodDetail = asyncHandler(async(req, res) => {
-    const {foodId} = req.params
-    const food = await Food.findById(foodId)
-    if(!food){
-        throw new ApiError(404, 'Food is not at restaurent')
-    }   
+const getFoodDetail = asyncHandler(async (req, res) => {
+  const { foodId } = req.params;
+  const food = await Food.findById(foodId);
+  if (!food) {
+    throw new ApiError(404, "Food is not at restaurent");
+  }
 
-    return res.status(200).json(
-        new ApiResponse(200, food, "Food details fetched")
-    )
-
-})
+  return res
+    .status(200)
+    .json(new ApiResponse(200, food, "Food details fetched"));
+});
 
 const getRestaurantMenu = asyncHandler(async (req, res) => {
-    const { restaurantId } = req.params;
+  const { restaurantId } = req.params;
 
-    const restaurant = await Restaurant.findById(restaurantId);
+  const restaurant = await Restaurant.findById(restaurantId);
 
-    if (!restaurant) {
-        throw new ApiError(404, "Restaurant not found");
-    }
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
 
-    const menu = await Food.aggregate([
-        {
-            $match: {
-                restaurant: new mongoose.Types.ObjectId(restaurantId),
-                isAvailable: true
-            }
+  const menu = await Food.aggregate([
+    {
+      $match: {
+        restaurant: new mongoose.Types.ObjectId(restaurantId),
+        isAvailable: true,
+      },
+    },
+    {
+      $sort: {
+        category: 1,
+        name: 1,
+      },
+    },
+    {
+      $lookup: {
+        from: "restaurants",
+        localField: "restaurant",
+        foreignField: "_id",
+        as: "restaurant",
+      },
+    },
+    {
+      $unwind: "$restaurant",
+    },
+    {
+      $group: {
+        _id: "$category",
+        foods: {
+          $push: {
+            _id: "$_id",
+            name: "$name",
+            description: "$description",
+            price: "$price",
+            image: "$image",
+            isAvailable: "$isAvailable",
+          },
         },
-        {
-            $sort: {
-                category: 1,
-                name: 1
-            }
-        },
-        {
-            $group: {
-                _id: "$category",
-                foods: {
-                    $push: {
-                        _id: "$_id",
-                        name: "$name",
-                        description: "$description",
-                        price: "$price",
-                        image: "$image",
-                        isAvailable: "$isAvailable"
-                    }
-                }
-            }
-        },
-        {
-            $project: {
-                _id: 0,
-                category: "$_id",
-                foods: 1
-            }
-        }
-    ]);
+      },
+    },
+    {
+      $project: {
+        _id: 0,
+        category: "$_id",
+        foods: 1,
+      },
+    },
+  ]);
 
-    return res.status(200).json(
-        new ApiResponse(
-            200,
-            {
-                restaurant,
-                menu
-            },
-            "Restaurant menu fetched successfully"
-        )
-    );
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        restaurant,
+        menu,
+      },
+      "Restaurant menu fetched successfully",
+    ),
+  );
+});
+
+const getFoodByCategory = asyncHandler(async (req, res) => {
+  const { category } = req.params;
+
+  const categoryFood = await Food.find({ category }).populate(
+    "restaurant",
+    "name address",
+  );
+
+  if (categoryFood.length === 0) {
+    throw new ApiError(404, "No food found in this category");
+  }
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, categoryFood, "Food fetched successfully"));
+});
+
+const getOwnerFoods = asyncHandler(async (req, res) => {
+  const ownerId = req.user._id;
+
+  const restaurant = await Restaurant.findOne({
+    owner: ownerId,
+    isDeleted: false,
+  });
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  const foods = await Food.find({
+    restaurant: restaurant._id,
+  }).sort({ createdAt: -1 });
+
+  return res
+    .status(200)
+    .json(new ApiResponse(200, foods, "Foods fetched successfully"));
 });
 
 export {
@@ -316,6 +363,7 @@ export {
   deleteFood,
   getAllFood,
   getFoodDetail,
-  getRestaurantMenu
-
-}
+  getRestaurantMenu,
+  getFoodByCategory,
+  getOwnerFoods,
+};

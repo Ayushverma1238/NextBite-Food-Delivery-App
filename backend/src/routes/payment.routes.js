@@ -19,7 +19,7 @@ const router = Router();
 // Customer
 router.post("/", verifyJWT, createPaymentOrder);
 
-router.post("/verify", verifyJWT, verifyPayment);
+router.post("/verify-payment", verifyJWT, verifyPayment);
 
 router.get("/", verifyJWT, getMyPayments);
 

@@ -56,6 +56,12 @@ const orderSchema = new mongoose.Schema(
         type: String,
         required: true,
       },
+      latitude:{
+        type:Number
+      },
+      longitude:{
+        type: Number
+      }
     },
 
     // Ordered items (snapshot)
@@ -129,7 +135,7 @@ const orderSchema = new mongoose.Schema(
       type: String,
       enum: [
         "PENDING",
-        "ACCEPTED",
+        "CONFIRMED",
         "PREPARING",
         "OUT_FOR_DELIVERY",
         "DELIVERED",
