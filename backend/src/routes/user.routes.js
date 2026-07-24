@@ -18,6 +18,6 @@ router.post('/logout', verifyJWT, logoutUser)
 router.post("/refresh-token", refreshAccessToken)
 router.patch("/change-password", verifyJWT, changePassword)
 router.get('/', verifyJWT, getCurrUser)
-router.get('/restaurants', verifyJWT, getAllRestaurant)
+router.get('/restaurants', getAllRestaurant)
 
 export default router
