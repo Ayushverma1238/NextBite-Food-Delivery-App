@@ -38,14 +38,14 @@ const createRestaurant = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const user = await User.findById(ownerId);
+  const user = await User.findById(ownerId)
 
   if (!user) {
     throw new ApiError(404, "User does not exist");
   }
 
   const existingRestaurant = await Restaurant.findOne({
-    owner: ownerId,
+    owner: user?._id,
     isDeleted: false,
   });
 
@@ -69,7 +69,7 @@ const createRestaurant = asyncHandler(async (req, res) => {
   await user.save({ validateBeforeSave: false });
 
   const restaurant = await Restaurant.create({
-    owner: ownerId,
+    owner: user?._id,
     name,
     image: imagePath.url,
     description,
@@ -676,6 +676,50 @@ const getRestaurantDetails = asyncHandler(async (req, res) => {
   return res
     .status(200)
     .json(new ApiResponse(200, restaurant, "Restaurant detail fetched"));
+});
+
+export const blockRestaurant = asyncHandler(async (req, res) => {
+  const { restaurantId } = req.params;
+
+  const restaurant = await Restaurant.findById(restaurantId);
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  restaurant.isOpen = false;
+
+  await restaurant.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      restaurant,
+      "Restaurant blocked successfully"
+    )
+  );
+});
+
+export const unblockRestaurant = asyncHandler(async (req, res) => {
+  const { restaurantId } = req.params;
+
+  const restaurant = await Restaurant.findById(restaurantId);
+
+  if (!restaurant) {
+    throw new ApiError(404, "Restaurant not found");
+  }
+
+  restaurant.isOpen = true;
+
+  await restaurant.save({ validateBeforeSave: false });
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      restaurant,
+      "Restaurant unblocked successfully"
+    )
+  );
 });
 
 export {

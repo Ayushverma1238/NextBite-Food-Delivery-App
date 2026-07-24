@@ -60,7 +60,7 @@ const restaurantSchema = new mongoose.Schema(
         required: true,
       },
     },
-
+   
     isOpen: {
       type: Boolean,
       default: true,

@@ -1,133 +1,89 @@
-const Reports = () => {
-  const reportCards = [
-    {
-      title: "Total Revenue",
-      value: "₹18,45,200",
-      icon: "💰",
-      color: "bg-green-500",
-    },
-    {
-      title: "Total Orders",
-      value: "12,845",
-      icon: "📦",
-      color: "bg-blue-500",
-    },
-    {
-      title: "Cancelled Orders",
-      value: "186",
-      icon: "❌",
-      color: "bg-red-500",
-    },
-    {
-      title: "Refund Requests",
-      value: "42",
-      icon: "🔄",
-      color: "bg-yellow-500",
-    },
-  ];
+import { useEffect, useState } from "react";
+import axiosInstance from "../../api/axios";
 
-  const topRestaurants = [
-    {
-      id: 1,
-      name: "Pizza Hub",
-      orders: 1450,
-      revenue: "₹4,85,000",
-    },
-    {
-      id: 2,
-      name: "Burger Point",
-      orders: 1210,
-      revenue: "₹3,95,000",
-    },
-    {
-      id: 3,
-      name: "Biryani House",
-      orders: 1080,
-      revenue: "₹3,42,000",
-    },
-    {
-      id: 4,
-      name: "Coffee Corner",
-      orders: 950,
-      revenue: "₹2,75,000",
-    },
-  ];
+import SummaryCards from "./Report/SummaryCards";
+import RevenueCards from "./Report/RevenueCards";
+import TopRestaurantsTable from "./Report/TopRestaurantTable";
+import TopCustomersTable from "./Report/TopCustomerTable";
+import StatisticsCards from "./Report/StatisticsCards";
+
+const Reports = () => {
+  const [loading, setLoading] = useState(true);
+
+  const [summary, setSummary] = useState({});
+  const [revenue, setRevenue] = useState({});
+  const [topRestaurants, setTopRestaurants] = useState([]);
+  const [topCustomers, setTopCustomers] = useState([]);
+  const [statistics, setStatistics] = useState({});
+
+  const getReports = async () => {
+    try {
+      setLoading(true);
+
+      const res = await axiosInstance.get("/admin/report");
+
+      const data = res.data.data;
+
+      setSummary(data.summary);
+      setRevenue(data.revenue);
+      setTopRestaurants(data.topRestaurants);
+      setTopCustomers(data.topCustomers);
+      setStatistics(data.statistics);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    getReports();
+  }, []);
+
+  if (loading) {
+    return (
+      <div className="flex h-[70vh] items-center justify-center">
+        <div className="h-12 w-12 animate-spin rounded-full border-4 border-orange-500 border-t-transparent"></div>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-gray-100 p-8">
-      <h1 className="mb-8 text-4xl font-bold">📊 Reports</h1>
+    <div className="space-y-8 p-6">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-4 md:flex-row md:items-center">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-800">
+            Reports & Analytics
+          </h1>
+
+          <p className="mt-1 text-gray-500">
+            View business performance and overall statistics.
+          </p>
+        </div>
+
+        <button
+          onClick={getReports}
+          className="rounded-xl bg-orange-500 px-5 py-3 font-medium text-white transition hover:bg-orange-600"
+        >
+          Refresh Report
+        </button>
+      </div>
 
       {/* Summary Cards */}
-      <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-        {reportCards.map((card, index) => (
-          <div
-            key={index}
-            className={`${card.color} rounded-2xl p-6 text-white shadow-lg`}
-          >
-            <div className="text-5xl">{card.icon}</div>
+      <SummaryCards summary={summary} />
 
-            <h2 className="mt-4 text-lg">{card.title}</h2>
-
-            <p className="mt-2 text-3xl font-bold">{card.value}</p>
-          </div>
-        ))}
-      </div>
+      {/* Revenue Cards */}
+      <RevenueCards revenue={revenue} />
 
       {/* Top Restaurants */}
-      <div className="mt-10 rounded-2xl bg-white p-6 shadow-lg">
-        <h2 className="mb-6 text-2xl font-bold">
-          🏆 Top Performing Restaurants
-        </h2>
+      <TopRestaurantsTable restaurants={topRestaurants} />
 
-        <table className="min-w-full">
-          <thead className="border-b">
-            <tr>
-              <th className="py-3 text-left">Restaurant</th>
-              <th className="py-3 text-left">Orders</th>
-              <th className="py-3 text-left">Revenue</th>
-            </tr>
-          </thead>
+      {/* Top Customers */}
+      <TopCustomersTable customers={topCustomers} />
 
-          <tbody>
-            {topRestaurants.map((restaurant) => (
-              <tr key={restaurant.id} className="border-b hover:bg-gray-50">
-                <td className="py-4 font-semibold">{restaurant.name}</td>
-
-                <td>{restaurant.orders}</td>
-
-                <td className="font-bold text-green-600">
-                  {restaurant.revenue}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Performance Summary */}
-      <div className="mt-10 grid gap-6 md:grid-cols-3">
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-600">Daily Revenue</h3>
-
-          <p className="mt-3 text-3xl font-bold text-green-600">₹68,500</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-600">
-            Weekly Revenue
-          </h3>
-
-          <p className="mt-3 text-3xl font-bold text-blue-600">₹4,72,300</p>
-        </div>
-
-        <div className="rounded-2xl bg-white p-6 shadow-lg">
-          <h3 className="text-lg font-semibold text-gray-600">
-            Monthly Revenue
-          </h3>
-
-          <p className="mt-3 text-3xl font-bold text-orange-500">₹18,45,200</p>
-        </div>
-      </div>
+      {/* Statistics */}
+      <StatisticsCards statistics={statistics} />
     </div>
   );
 };

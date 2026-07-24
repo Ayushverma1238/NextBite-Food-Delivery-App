@@ -10,7 +10,7 @@ const StatCard = ({
 }) => {
   return (
     <div
-      className={`group overflow-hidden rounded-3xl bg-linear-to-r ${gradient} p-6 text-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl`}
+      className={`group relative overflow-hidden rounded-3xl bg-linear-to-r ${gradient} p-6 text-white shadow-lg transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl`}
     >
       <div className="flex items-start justify-between">
         <div>

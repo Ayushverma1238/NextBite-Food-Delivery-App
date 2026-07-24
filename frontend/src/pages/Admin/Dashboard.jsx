@@ -23,7 +23,6 @@ const Dashboard = () => {
       setLoading(true);
 
       const res = await axiosInstance.get("/admin/dashboard-analytics");
-      console.log("Dashbaord res", res);
       setDashboard(res.data.data);
     } catch (error) {
       console.log(error);
@@ -65,7 +64,7 @@ const Dashboard = () => {
   };
 
   return (
-    <div className="space-y-8 p-6 overflow-x-hidden bg-slate-100 min-h-screen ">
+    <div className="space-y-8 p-6 w-full overflow-x-hidden bg-slate-100 min-h-screen ">
       {/* Header */}
       <DashboardHeader refreshDashboard={fetchDashboard} />
 

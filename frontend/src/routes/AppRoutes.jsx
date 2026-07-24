@@ -21,7 +21,6 @@ import NotFound from "../pages/NotFound/NotFound";
 import AdminDashboard from "../pages/Admin/Dashboard";
 import Users from "../pages/Admin/Users"; // If your file is User.jsx, change this to ../pages/Admin/User
 import AdminRestaurants from "../pages/Admin/Restaurants";
-import Categories from "../pages/Admin/Categories";
 import AdminOrders from "../pages/Admin/Orders";
 import Reports from "../pages/Admin/Reports";
 import Analytics from "../pages/Admin/Analytics";
@@ -111,10 +110,7 @@ const router = createBrowserRouter([
             path: "restaurants",
             element: <AdminRestaurants />,
           },
-          {
-            path: "categories",
-            element: <Categories />,
-          },
+         
           {
             path: "orders",
             element: <AdminOrders />,

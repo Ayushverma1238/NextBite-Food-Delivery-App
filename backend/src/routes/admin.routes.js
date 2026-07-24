@@ -1,40 +1,59 @@
-import { Router }from "express";
+import { Router } from "express";
 const router = Router();
+
 import { verifyJWT, verifyAdmin } from "../middlewares/auth.middleware.js";
+
 import {
   blockUser,
+  unblockUser,
   getAdminProfile,
   getAllPayment,
   getAllUsers,
   getDashboardAnalytics,
-  getPlateformAnalytics,
   getRecentActivities,
-  getUserDetail,
   getAllRestaurant,
-  unblockUser,
   getAllOrder,
+  getReports,
+  getAnalytics,
 } from "../controllers/admin.controller.js";
 
 import {
   createRestaurant,
   deleteRestaurant,
+  blockRestaurant,
+  unblockRestaurant,
 } from "../controllers/restaurant.controller.js";
 
 router.use(verifyJWT, verifyAdmin);
 
+// ================= Dashboard =================
 router.get("/dashboard-analytics", getDashboardAnalytics);
-router.get("/users", getAllUsers);
-router.get("/:userId/user-detail", getUserDetail);
-router.patch("/block-user/:userId", blockUser);
-router.patch("/unblock-user/:userId", unblockUser);
-router.get("/plateform-analytics", getPlateformAnalytics);
 router.get("/recent-activities", getRecentActivities);
 router.get("/", getAdminProfile);
-router.get("/all-payments", getAllPayment);
-router.get("/all-restaurant", getAllRestaurant);
-router.get("/all-order", getAllOrder);
+router.get("/analytics", verifyJWT, verifyAdmin, getAnalytics);
+
+// ================= Users =================
+router.get("/users", getAllUsers);
+router.patch("/block-user/:userId", blockUser);
+router.patch("/unblock-user/:userId", unblockUser);
+
+// ================= Payments =================
+router.get("/payments", getAllPayment);
+
+// ================= Orders =================
+router.get("/orders", getAllOrder);
+
+// ================= Restaurants =================
+router.get("/restaurants", getAllRestaurant);
 
 router.post("/create-restaurant", createRestaurant);
+
+router.patch("/block-restaurant/:restaurantId", blockRestaurant);
+
+router.patch("/unblock-restaurant/:restaurantId", unblockRestaurant);
+
 router.delete("/delete-restaurant/:restaurantId", deleteRestaurant);
+
+router.get("/report", getReports);
 
 export default router;

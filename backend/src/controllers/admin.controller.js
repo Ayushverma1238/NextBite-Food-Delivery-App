@@ -396,7 +396,9 @@ const getAllUsers = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const [users, totalUsers] = await Promise.all([
-    User.find({})
+    User.find({
+      role: { $ne: "ADMIN" },
+    })
       .select("-password -refreshToken")
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -419,17 +421,6 @@ const getAllUsers = asyncHandler(async (req, res) => {
   );
 });
 
-const getUserDetail = asyncHandler(async (req, res) => {
-  const { userId } = req.params;
-  const user = await User.findById(userId).select("-password -refreshToken");
-  if (!user) {
-    throw new ApiError(404, "User not found");
-  }
-
-  return res
-    .status(200)
-    .json(new ApiResponse(200, user, "User details fetched successfully"));
-});
 
 const blockUser = asyncHandler(async (req, res) => {
   const userId = req.params;
@@ -453,14 +444,74 @@ const unblockUser = asyncHandler(async (req, res) => {
   return res.status(200).json(new ApiResponse(200, {}, "User blocked"));
 });
 
-const getPlateformAnalytics = asyncHandler(async (req, res) => {
-  const [monthlyRevenue, monthlyOrder, monthlyUser] = await Promise.all([
+export const getAnalytics = asyncHandler(async (req, res) => {
+  const currentYear = new Date().getFullYear();
+
+  const [
+    totalUsers,
+    totalRestaurants,
+    totalOrders,
+    totalRevenue,
+    activeRestaurants,
+    cancelledOrders,
+    deliveredOrders,
+    monthlyAnalytics,
+  ] = await Promise.all([
+    User.countDocuments(),
+
+    Restaurant.countDocuments({
+      isDeleted: false,
+    }),
+
+    Order.countDocuments(),
+
     Order.aggregate([
+      {
+        $match: {
+          paymentStatus: "PAID",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          revenue: {
+            $sum: "$totalAmount",
+          },
+        },
+      },
+    ]),
+
+    Restaurant.countDocuments({
+      isOpen: true,
+      isDeleted: false,
+    }),
+
+    Order.countDocuments({
+      orderStatus: "CANCELLED",
+    }),
+
+    Order.countDocuments({
+      orderStatus: "DELIVERED",
+    }),
+
+    Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(`${currentYear}-01-01`),
+            $lte: new Date(`${currentYear}-12-31`),
+          },
+        },
+      },
       {
         $group: {
           _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
+            month: {
+              $month: "$createdAt",
+            },
+          },
+          orders: {
+            $sum: 1,
           },
           revenue: {
             $sum: "$totalAmount",
@@ -469,49 +520,59 @@ const getPlateformAnalytics = asyncHandler(async (req, res) => {
       },
       {
         $sort: {
-          "_id.year": 1,
           "_id.month": 1,
-        },
-      },
-    ]),
-
-    Order.aggregate([
-      {
-        $group: {
-          _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
-          },
-          totalOrders: {
-            $sum: 1,
-          },
-        },
-      },
-    ]),
-    User.aggregate([
-      {
-        $group: {
-          _id: {
-            year: { $year: "$createdAt" },
-            month: { $month: "$createdAt" },
-          },
-          totalUsers: {
-            $sum: 1,
-          },
         },
       },
     ]),
   ]);
 
-  return res
-    .status(200)
-    .json(
-      new ApiResponse(
-        200,
-        { monthlyOrder, monthlyRevenue, monthlyUser },
-        "Plateform data fetch successfully",
-      ),
-    );
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const monthlyPerformance = months.map((month, index) => {
+    const found = monthlyAnalytics.find((item) => item._id.month === index + 1);
+
+    return {
+      month,
+      orders: found?.orders || 0,
+      revenue: found?.revenue || 0,
+    };
+  });
+
+  return res.status(200).json(
+    new ApiResponse(200, {
+      cards: {
+        users: totalUsers,
+        restaurants: totalRestaurants,
+        orders: totalOrders,
+        revenue: totalRevenue[0]?.revenue || 0,
+      },
+
+      overview: {
+        activeRestaurants,
+        cancelledOrders,
+        deliveredOrders,
+        successRate:
+          totalOrders === 0
+            ? 0
+            : Number(((deliveredOrders / totalOrders) * 100).toFixed(1)),
+      },
+
+      monthlyPerformance,
+    }),
+  );
 });
 
 const getRecentActivities = asyncHandler(async (req, res) => {
@@ -583,7 +644,12 @@ const getAllRestaurant = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const [restaurants, totalRestaurants] = await Promise.all([
-    Restaurant.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Restaurant.find({
+      isDeleted: false,
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
 
     Restaurant.countDocuments(),
   ]);
@@ -608,7 +674,13 @@ const getAllOrder = asyncHandler(async (req, res) => {
   const skip = (page - 1) * limit;
 
   const [orders, totalOrders] = await Promise.all([
-    Order.find({}).sort({ createdAt: -1 }).skip(skip).limit(limit),
+    Order.find({})
+      .populate("owner", "fullName email")
+      .populate("restaurant", "name")
+      .populate("address")
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit),
 
     Order.countDocuments(),
   ]);
@@ -627,16 +699,333 @@ const getAllOrder = asyncHandler(async (req, res) => {
   );
 });
 
+const getReports = asyncHandler(async (req, res) => {
+  const [
+    totalRevenue,
+    totalOrders,
+    cancelledOrders,
+    totalRestaurants,
+    totalCustomers,
+    topRestaurants,
+    topCustomers,
+    dailyRevenue,
+    weeklyRevenue,
+    monthlyRevenue,
+
+    deliveredOrders,
+    pendingOrders,
+    refundRequests,
+
+    averageOrderValue,
+    highestOrder,
+
+    activeRestaurants,
+    inactiveRestaurants,
+
+    codOrders,
+    onlinePayments,
+  ] = await Promise.all([
+    // Total Revenue
+    Order.aggregate([
+      {
+        $match: {
+          paymentStatus: "PAID",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          revenue: {
+            $sum: "$totalAmount",
+          },
+        },
+      },
+    ]),
+
+    // Total Orders
+    Order.countDocuments(),
+
+    // Cancelled Orders
+    Order.countDocuments({
+      orderStatus: "CANCELLED",
+    }),
+
+    // Total Restaurants
+    Restaurant.countDocuments(),
+
+    // Total Customers
+    User.countDocuments({
+      role: "USER",
+    }),
+
+    // Top Restaurants
+    Order.aggregate([
+      {
+        $match: {
+          isDeleted: false,
+        },
+      },
+      {
+        $lookup: {
+          from: "restaurants",
+          localField: "restaurant",
+          foreignField: "_id",
+          as: "restaurant",
+        },
+      },
+      {
+        $unwind: "$restaurant",
+      },
+      {
+        $group: {
+          _id: "$restaurant._id",
+          restaurant: {
+            $first: "$restaurant.name",
+          },
+          totalOrders: {
+            $sum: 1,
+          },
+          revenue: {
+            $sum: "$totalAmount",
+          },
+        },
+      },
+      {
+        $sort: {
+          revenue: -1,
+        },
+      },
+      {
+        $limit: 5,
+      },
+    ]),
+
+    // Top Customers
+    Order.aggregate([
+      {
+        $lookup: {
+          from: "users",
+          localField: "owner",
+          foreignField: "_id",
+          as: "customer",
+        },
+      },
+      {
+        $unwind: "$customer",
+      },
+      {
+        $group: {
+          _id: "$customer._id",
+          name: {
+            $first: "$customer.name",
+          },
+          email: {
+            $first: "$customer.email",
+          },
+          profile: {
+            $first: "$customer.profile",
+          },
+          totalOrders: {
+            $sum: 1,
+          },
+          totalSpent: {
+            $sum: "$totalAmount",
+          },
+        },
+      },
+      {
+        $sort: {
+          totalSpent: -1,
+        },
+      },
+      {
+        $limit: 5,
+      },
+    ]),
+
+    // Daily Revenue
+    Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(new Date().setHours(0, 0, 0, 0)),
+          },
+          paymentStatus: "PAID",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          revenue: {
+            $sum: "$totalAmount",
+          },
+        },
+      },
+    ]),
+
+    // Weekly Revenue
+    Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000),
+          },
+          paymentStatus: "PAID",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          revenue: {
+            $sum: "$totalAmount",
+          },
+        },
+      },
+    ]),
+
+    // Monthly Revenue
+    Order.aggregate([
+      {
+        $match: {
+          createdAt: {
+            $gte: new Date(new Date().getFullYear(), new Date().getMonth(), 1),
+          },
+          paymentStatus: "PAID",
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          revenue: {
+            $sum: "$totalAmount",
+          },
+        },
+      },
+    ]),
+
+    // Delivered Orders
+    Order.countDocuments({
+      orderStatus: "DELIVERED",
+    }),
+
+    // Pending Orders
+    Order.countDocuments({
+      orderStatus: "PENDING",
+    }),
+
+    // Refund Requests
+    Order.countDocuments({
+      paymentStatus: "REFUNDED",
+    }),
+
+    // Average Order Value
+    Order.aggregate([
+      {
+        $group: {
+          _id: null,
+          averageOrderValue: {
+            $avg: "$totalAmount",
+          },
+        },
+      },
+    ]),
+
+    // Highest Order
+    Order.aggregate([
+      {
+        $group: {
+          _id: null,
+          highestOrder: {
+            $max: "$totalAmount",
+          },
+        },
+      },
+    ]),
+
+    // Active Restaurants
+    Restaurant.countDocuments({
+      isDeleted: false,
+      isOpen: true,
+    }),
+
+    // Inactive Restaurants
+    Restaurant.countDocuments({
+      $or: [
+        {
+          isDeleted: true,
+        },
+        {
+          isOpen: false,
+        },
+      ],
+    }),
+
+    // COD Orders
+    Order.countDocuments({
+      paymentMethod: "COD",
+    }),
+
+    // Online Payments
+    Order.countDocuments({
+      paymentMethod: "RAZORPAY",
+    }),
+  ]);
+
+  return res.status(200).json(
+    new ApiResponse(
+      200,
+      {
+        summary: {
+          totalRevenue: totalRevenue[0]?.revenue || 0,
+          totalOrders,
+          totalRestaurants,
+          totalCustomers,
+          deliveredOrders,
+          pendingOrders,
+          cancelledOrders,
+          refundRequests,
+        },
+
+        revenue: {
+          today: dailyRevenue[0]?.revenue || 0,
+          weekly: weeklyRevenue[0]?.revenue || 0,
+          monthly: monthlyRevenue[0]?.revenue || 0,
+        },
+
+        topRestaurants,
+
+        topCustomers,
+
+        statistics: {
+          averageOrderValue: Math.round(
+            averageOrderValue[0]?.averageOrderValue || 0,
+          ),
+
+          highestOrder: highestOrder[0]?.highestOrder || 0,
+
+          activeRestaurants,
+
+          inactiveRestaurants,
+
+          codOrders,
+
+          onlinePayments,
+        },
+      },
+      "Reports fetched successfully",
+    ),
+  );
+});
+
 export {
   getDashboardAnalytics,
   getAllUsers,
-  getUserDetail,
   blockUser,
   unblockUser,
-  getPlateformAnalytics,
   getRecentActivities,
   getAdminProfile,
   getAllPayment,
   getAllRestaurant,
   getAllOrder,
+  getReports,
 };

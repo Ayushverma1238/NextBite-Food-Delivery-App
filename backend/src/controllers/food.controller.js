@@ -356,6 +356,7 @@ const getOwnerFoods = asyncHandler(async (req, res) => {
     .json(new ApiResponse(200, foods, "Foods fetched successfully"));
 });
 
+
 export {
   addFoodIntoRestaurant,
   updateFoodDetail,

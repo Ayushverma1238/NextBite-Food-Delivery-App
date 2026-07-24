@@ -1,8 +1,12 @@
+import { useState } from "react";
 import { NavLink, Outlet } from "react-router-dom";
 import { useSelector } from "react-redux";
+import { Menu, X } from "lucide-react";
 
 const RestaurantOwnerLayout = () => {
-  const {user} = useSelector((state)=> state.auth)
+  const { user } = useSelector((state) => state.auth);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   const menuItems = [
     {
       name: "Dashboard",
@@ -33,22 +37,50 @@ const RestaurantOwnerLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100">
-      {/* Sidebar */}
-      <aside className="w-72 bg-gray-900 text-white flex flex-col">
-        <div className="border-b border-gray-700 p-6">
-          <h1 className="text-3xl font-bold text-orange-500">NextBite</h1>
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
 
-          <p className="mt-2 text-sm text-gray-400">Restaurant Owner</p>
+      {/* Sidebar */}
+      <aside
+        className={`fixed left-0 top-0 z-50 flex h-screen w-72 flex-col bg-gray-900 text-white transition-transform duration-300 md:static md:translate-x-0 ${
+          sidebarOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+      >
+        {/* Logo */}
+        <div className="flex items-center justify-between border-b border-gray-700 p-6">
+          <div>
+            <h1 className="text-3xl font-bold text-orange-500">NextBite</h1>
+
+            <p className="mt-2 text-sm text-gray-400">
+              Restaurant Owner
+            </p>
+          </div>
+
+          <button
+            className="md:hidden"
+            onClick={() => setSidebarOpen(false)}
+          >
+            <X size={26} />
+          </button>
         </div>
 
+        {/* Navigation */}
         <nav className="flex-1 p-4">
           {menuItems.map((item) => (
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => setSidebarOpen(false)}
               className={({ isActive }) =>
                 `mb-2 flex items-center gap-3 rounded-lg px-4 py-3 transition ${
-                  isActive ? "bg-orange-500 text-white" : "hover:bg-gray-800"
+                  isActive
+                    ? "bg-orange-500 text-white"
+                    : "hover:bg-gray-800"
                 }`
               }
             >
@@ -58,31 +90,49 @@ const RestaurantOwnerLayout = () => {
           ))}
         </nav>
 
+        {/* Logout */}
         <div className="border-t border-gray-700 p-4">
-          <button className="w-full rounded-lg bg-red-500 py-3 font-semibold hover:bg-red-600">
+          <button className="w-full rounded-lg bg-red-500 py-3 font-semibold transition hover:bg-red-600">
             Logout
           </button>
         </div>
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1">
-        <header className="flex items-center justify-between bg-white px-8 py-5 shadow">
-          <h2 className="text-2xl font-bold">Welcome Restaurant Owner 👋</h2>
+      <main className="min-w-0 flex-1">
+        {/* Header */}
+        <header className="flex items-center justify-between bg-white px-6 py-5 shadow">
+          <div className="flex items-center gap-4">
+            {/* Hamburger */}
+            <button
+              className="rounded-lg p-2 hover:bg-gray-100 md:hidden"
+              onClick={() => setSidebarOpen(true)}
+            >
+              <Menu size={28} />
+            </button>
+
+            <h2 className="text-xl font-bold md:text-2xl">
+              Welcome Restaurant Owner 👋
+            </h2>
+          </div>
 
           <div className="flex items-center gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full bg-orange-500 font-bold text-white">
               R
             </div>
 
-            <div>
+            <div className="hidden sm:block">
               <p className="font-semibold">Restaurant Owner</p>
-              <p className="text-sm text-gray-500">{user.email}</p>
+
+              <p className="text-sm text-gray-500">
+                {user?.email}
+              </p>
             </div>
           </div>
         </header>
 
-        <div className="p-6">
+        {/* Page Content */}
+        <div className="p-4 md:p-6">
           <Outlet />
         </div>
       </main>
