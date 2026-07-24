@@ -11,6 +11,7 @@ import jwt from "jsonwebtoken";
 const options = {
   httpOnly: true,
   secure: true,
+  sameSite: "none",
 };
 
 const generateAccessAndRefreshToken = async (userId) => {
