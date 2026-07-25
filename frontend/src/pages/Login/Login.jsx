@@ -9,6 +9,7 @@ import {
   EyeOff,
   ArrowRight,
   UtensilsCrossed,
+  Loader2
 } from "lucide-react";
 
 import axiosInstance from "../../api/axios";
@@ -19,6 +20,7 @@ const Login = () => {
   const dispatch = useDispatch();
 
   const [showPassword, setShowPassword] = useState(false);
+  const [loading, setLoading] = useState(false)
 
   const [formData, setFormData] = useState({
     email: "",
@@ -34,8 +36,8 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-
     try {
+      setLoading(true)
       const res = await axiosInstance.post("/user/login", formData);
 
       if (res.data.success) {
@@ -44,6 +46,8 @@ const Login = () => {
       }
     } catch (error) {
       console.log(error);
+    } finally {
+      setLoading(false)
     }
   };
 
@@ -202,17 +206,28 @@ const Login = () => {
             {/* Login Button */}
 
             <motion.button
-              whileHover={{
-                scale: 1.02,
-              }}
-              whileTap={{
-                scale: 0.98,
-              }}
+              whileHover={!loading ? { scale: 1.02 } : {}}
+              whileTap={!loading ? { scale: 0.98 } : {}}
               type="submit"
-              className="flex w-full items-center justify-center gap-2 rounded-xl bg-linear-to-r from-orange-500 to-red-500 py-3.5 font-semibold text-white shadow-lg transition hover:shadow-orange-300"
+              disabled={loading}
+              className={`flex w-full items-center justify-center gap-2 rounded-xl py-3.5 font-semibold text-white shadow-lg transition
+    ${
+      loading
+        ? "cursor-not-allowed bg-gray-400"
+        : "bg-linear-to-r from-orange-500 to-red-500 hover:shadow-orange-300"
+    }`}
             >
-              Login
-              <ArrowRight size={20} />
+              {loading ? (
+                <>
+                  <Loader2 className="animate-spin" size={20} />
+                  Logging in...
+                </>
+              ) : (
+                <>
+                  Login
+                  <ArrowRight size={20} />
+                </>
+              )}
             </motion.button>
 
             {/* Register */}
