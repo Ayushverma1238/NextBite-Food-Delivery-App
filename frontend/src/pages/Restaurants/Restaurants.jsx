@@ -47,7 +47,6 @@ const Restaurants = () => {
         if (res.data.success) {
           toast.success("All restaurants");
           setRestaurants(res.data.data);
-          console.log(res.data);
         }
       } catch (error) {
         console.log("Error fetching restaurant");

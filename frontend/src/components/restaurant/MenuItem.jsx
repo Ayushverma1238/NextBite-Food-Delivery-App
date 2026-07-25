@@ -1,14 +1,22 @@
 import { toast } from "react-toastify";
 import axiosInstance from "../../api/axios";
 import { useState } from "react";
-import { useDispatch } from "react-redux";
+import { useDispatch, useSelector } from "react-redux";
 import { totalCartItem } from "../../feature/cart/cartSlice";
+import { useNavigate } from "react-router-dom";
 
 const MenuItem = ({ item }) => {
   const [quantity, setQuantity] = useState(1);
-  const dispatch= useDispatch();
+  const { isAuthenticated } = useSelector((state) => state.auth);
+  const navigate = useNavigate();
+  const dispatch = useDispatch();
   // console.log(item)
   const handleAddToCart = async (id) => {
+    if (!isAuthenticated) {
+      toast.success("You are not login! please Login");
+      navigate("/login");
+      return;
+    }
     try {
       const res = await axiosInstance.post(
         `/cart/${id}`,

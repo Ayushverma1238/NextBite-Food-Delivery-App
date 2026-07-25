@@ -99,7 +99,7 @@ const AddRestaurantModal = ({ open, onClose, onCreated }) => {
 
   const handleSelectOwner = (user) => {
     setOwner(user);
-    setOwnerQuery(`${user.fullName} (${user.email})`);
+    setOwnerQuery(`${user.name} (${user.email})`);
     setOwnerDropdownOpen(false);
   };
 
@@ -258,7 +258,7 @@ const AddRestaurantModal = ({ open, onClose, onCreated }) => {
                       className="flex w-full flex-col items-start px-4 py-2 text-left transition hover:bg-orange-50"
                     >
                       <span className="text-sm font-medium text-gray-800">
-                        {u.fullName}
+                        {u.name}
                       </span>
                       <span className="text-xs text-gray-500">
                         {u.email} &middot; {u.role}

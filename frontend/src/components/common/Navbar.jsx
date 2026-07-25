@@ -40,10 +40,15 @@ function Navbar() {
     getCurrentUser();
   }, [dispatch]);
 
-  const handleLogout = () => {
-    dispatch(logoutSuccess());
-    setMenuOpen(false);
-    navigate("/login");
+  const handleLogout = async() => {
+    try {
+      const res = await axiosInstance.post('/user/logout');
+      dispatch(logoutSuccess());
+      setMenuOpen(false);
+      navigate("/login");
+    } catch (error) {
+      console.log("Error during logout", error.message)
+    }
   };
 
   const closeMenu = () => setMenuOpen(false);
@@ -112,7 +117,7 @@ function Navbar() {
               </NavLink>
             </li>
 
-            <li>
+            {/* <li>
               <NavLink
                 to="/wishlist"
                 className={({ isActive }) =>
@@ -123,7 +128,7 @@ function Navbar() {
               >
                 Wishlist <sup>({wishlist.length})</sup>
               </NavLink>
-            </li>
+            </li> */}
 
             {isAuthenticated && user?.role === "ADMIN" && (
               <li>
@@ -227,9 +232,7 @@ function Navbar() {
       >
         {/* Header */}
         <div className="flex items-center justify-between border-b p-5">
-          <h2 className="text-2xl font-bold text-orange-500">
-            🍔 NextBite
-          </h2>
+          <h2 className="text-2xl font-bold text-orange-500">🍔 NextBite</h2>
 
           <button
             onClick={closeMenu}
