@@ -13,6 +13,7 @@ const addFoodIntoRestaurant = asyncHandler(async (req, res) => {
 
   const restaurant = await Restaurant.findOne({
     owner: ownerId,
+    isDeleted:false
   });
 
   if (!restaurant) {
@@ -72,6 +73,7 @@ const updateFoodDetail = asyncHandler(async (req, res) => {
 
   const restaurant = await Restaurant.findOne({
     owner: ownerId,
+    isDeleted:false
   });
 
   if (!restaurant) {
@@ -125,7 +127,7 @@ const changeAvailabilityFood = asyncHandler(async (req, res) => {
     throw new ApiError(400, "isAvailable must be true or false");
   }
 
-  const restaurant = await Restaurant.findOne({ owner: ownerId });
+  const restaurant = await Restaurant.findOne({ owner: ownerId, isDeleted:false });
 
   if (!restaurant) {
     throw new ApiError(404, "Restaurant not found");
@@ -160,6 +162,7 @@ const deleteFood = asyncHandler(async (req, res) => {
 
   const restaurant = await Restaurant.findOne({
     owner: ownerId,
+    isDeleted:false
   });
   if (!restaurant) {
     throw new ApiError(404, "Restaurant not found");
@@ -182,6 +185,7 @@ const getAllFood = asyncHandler(async (req, res) => {
     {
       $match: {
         isAvailable: true,
+        
       },
     },
     {
