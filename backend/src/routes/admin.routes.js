@@ -23,6 +23,7 @@ import {
   blockRestaurant,
   unblockRestaurant,
 } from "../controllers/restaurant.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 router.use(verifyJWT, verifyAdmin);
 
@@ -46,7 +47,7 @@ router.get("/orders", getAllOrder);
 // ================= Restaurants =================
 router.get("/restaurants", getAllRestaurant);
 
-router.post("/create-restaurant", createRestaurant);
+router.post("/create-restaurant", upload.single("image"), createRestaurant);
 
 router.patch("/block-restaurant/:restaurantId", blockRestaurant);
 

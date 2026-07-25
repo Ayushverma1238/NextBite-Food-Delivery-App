@@ -9,6 +9,7 @@ import mongoose from "mongoose";
 import { uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const createRestaurant = asyncHandler(async (req, res) => {
+  console.log(req.body);
   const {
     ownerId,
     name,
@@ -38,7 +39,7 @@ const createRestaurant = asyncHandler(async (req, res) => {
     throw new ApiError(400, "All fields are required");
   }
 
-  const user = await User.findById(ownerId)
+  const user = await User.findById(ownerId);
 
   if (!user) {
     throw new ApiError(404, "User does not exist");
@@ -93,7 +94,6 @@ const createRestaurant = asyncHandler(async (req, res) => {
 
 const updateRestaurantDetails = asyncHandler(async (req, res) => {
   const ownerId = req.user._id;
-
 
   const restaurant = await Restaurant.findOne({
     owner: ownerId,
@@ -691,13 +691,9 @@ export const blockRestaurant = asyncHandler(async (req, res) => {
 
   await restaurant.save({ validateBeforeSave: false });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      restaurant,
-      "Restaurant blocked successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(new ApiResponse(200, restaurant, "Restaurant blocked successfully"));
 });
 
 export const unblockRestaurant = asyncHandler(async (req, res) => {
@@ -713,13 +709,11 @@ export const unblockRestaurant = asyncHandler(async (req, res) => {
 
   await restaurant.save({ validateBeforeSave: false });
 
-  return res.status(200).json(
-    new ApiResponse(
-      200,
-      restaurant,
-      "Restaurant unblocked successfully"
-    )
-  );
+  return res
+    .status(200)
+    .json(
+      new ApiResponse(200, restaurant, "Restaurant unblocked successfully"),
+    );
 });
 
 export {

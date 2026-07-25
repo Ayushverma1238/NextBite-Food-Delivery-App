@@ -161,6 +161,7 @@ const AddRestaurantModal = ({ open, onClose, onCreated }) => {
 
     try {
       setSubmitting(true);
+      console.log("Owner selected", owner)
 
       const payload = new FormData();
       payload.append("ownerId", owner._id);
