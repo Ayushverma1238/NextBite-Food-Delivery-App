@@ -65,7 +65,7 @@ const router = createBrowserRouter([
         element: <Orders />,
       },
       {
-        path: "/track-order/:order",
+        path: "/track-order/:orderId",
         element: <TrackOrder />,
       },
       {

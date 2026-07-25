@@ -216,9 +216,6 @@ const deleteOrder = asyncHandler(async (req, res) => {
 const getOrderDetails = asyncHandler(async (req, res) => {
   const { orderId } = req.params;
 
-  console.log("URL:", req.originalUrl);
-console.log("Params:", req.params);
-
   if (!mongoose.Types.ObjectId.isValid(orderId)) {
     throw new ApiError(400, "Invalid order id");
   }

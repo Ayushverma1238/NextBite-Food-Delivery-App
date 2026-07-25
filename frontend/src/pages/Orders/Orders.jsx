@@ -17,7 +17,6 @@ const Orders = () => {
     try {
       const res = await axiosInstance("/order");
       setOrders(res.data.data);
-      console.log("Order res", res);
     } catch (error) {
       console.log(error);
     }
