@@ -27,6 +27,7 @@ function Navbar() {
 
         dispatch(loginSuccess(res.data.data));
 
+
         const cart = await axiosInstance.get("/cart", {
           withCredentials: true,
         });
@@ -106,7 +107,7 @@ function Navbar() {
 
             <li>
               <NavLink
-                to="/cart"
+                to={isAuthenticated ? "/cart" : "/login"}
                 className={({ isActive }) =>
                   isActive
                     ? "font-bold text-orange-500"
