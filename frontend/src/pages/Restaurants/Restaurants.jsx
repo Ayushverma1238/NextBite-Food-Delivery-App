@@ -166,10 +166,9 @@ const Restaurants = () => {
 
         {/* Restaurant Cards */}
         <motion.div layout className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-2">
-          <AnimatePresence mode="popLayout">
             {filteredRestaurants.length > 0 ? (
               filteredRestaurants.map((restaurant) => (
-                <motion.div
+                <div
                   key={restaurant._id}
                   layout
                   initial={{ opacity: 0, y: 20 }}
@@ -178,7 +177,7 @@ const Restaurants = () => {
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <RestaurantCard restaurant={restaurant} />
-                </motion.div>
+                </div>
               ))
             ) : (
               <motion.div
@@ -197,7 +196,6 @@ const Restaurants = () => {
                 </p>
               </motion.div>
             )}
-          </AnimatePresence>
         </motion.div>
       </div>
     </div>

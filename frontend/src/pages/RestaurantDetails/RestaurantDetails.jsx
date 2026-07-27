@@ -83,14 +83,10 @@ function RestaurantDetails() {
             const isActive = selectedCategory === item.category;
 
             return (
-              <motion.div
+              <div
                 key={item.category}
                 variants={fadeUp}
                 onClick={() => setSelectedCategory(item.category)}
-                whileHover={{ scale: 1.05, y: -4 }}
-                whileTap={{ scale: 0.98 }}
-                animate={{ scale: isActive ? 1.05 : 1 }}
-                transition={{ type: "spring", stiffness: 260, damping: 20 }}
                 className={`min-w-70 rounded-3xl overflow-hidden my-5 mx-5 cursor-pointer shadow-lg transition-shadow duration-300
                 ${isActive ? "ring-4 ring-gray-500 shadow-xl" : ""}`}
               >
@@ -111,7 +107,7 @@ function RestaurantDetails() {
                     Starting ₹{firstFood?.price}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             );
           })}
         </motion.div>
