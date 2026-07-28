@@ -60,7 +60,7 @@ function Navbar() {
         <div className="mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
           {/* Logo */}
           <NavLink to="/" className="text-2xl font-bold text-orange-500">
-            🍔 NextBite
+            <div> <img src="./LOGO_bg.png" alt="LOGO" /> NextBite</div>
           </NavLink>
 
           {/* Desktop Menu */}
