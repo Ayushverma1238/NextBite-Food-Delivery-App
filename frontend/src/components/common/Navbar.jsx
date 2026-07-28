@@ -27,7 +27,6 @@ function Navbar() {
 
         dispatch(loginSuccess(res.data.data));
 
-
         const cart = await axiosInstance.get("/cart", {
           withCredentials: true,
         });
@@ -41,14 +40,14 @@ function Navbar() {
     getCurrentUser();
   }, [dispatch]);
 
-  const handleLogout = async() => {
+  const handleLogout = async () => {
     try {
-      const res = await axiosInstance.post('/user/logout');
+      const res = await axiosInstance.post("/user/logout");
       dispatch(logoutSuccess());
       setMenuOpen(false);
       navigate("/login");
     } catch (error) {
-      console.log("Error during logout", error.message)
+      console.log("Error during logout", error.message);
     }
   };
 
@@ -60,7 +59,10 @@ function Navbar() {
         <div className="mx-auto flex h-16 items-center justify-between px-4 lg:px-8">
           {/* Logo */}
           <NavLink to="/" className="text-2xl font-bold text-orange-500">
-            <div> <img src="./LOGO_bg.png" alt="LOGO" /> NextBite</div>
+            <div className="flex items-center gap-2.5">
+              {" "}
+              <img className="h-15" src="/LOGO_bg.png" alt="LOGO" /> NextBite
+            </div>
           </NavLink>
 
           {/* Desktop Menu */}
