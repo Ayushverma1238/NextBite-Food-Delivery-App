@@ -11,7 +11,11 @@ import reviews from "../../data/reviews";
 // so every screen in the app animates with the same rhythm.
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
 };
 
 const stagger = (staggerChildren = 0.08) => ({
@@ -24,6 +28,12 @@ const sectionViewport = { once: true, margin: "-80px" };
 function RestaurantDetails() {
   const { id } = useParams();
 
+  useEffect(() => {
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth", // or "auto"
+    });
+  }, [id]);
   const [restaurant, setRestaurant] = useState({
     restaurant: {},
     menu: [],
