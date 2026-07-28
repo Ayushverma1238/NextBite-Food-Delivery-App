@@ -9,7 +9,11 @@ import { toast } from "react-toastify";
 // RestaurantDetails, so this page feels like part of the same app.
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] } },
+  show: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.5, ease: [0.22, 1, 0.36, 1] },
+  },
 };
 
 const stagger = (staggerChildren = 0.06) => ({
@@ -18,6 +22,7 @@ const stagger = (staggerChildren = 0.06) => ({
 });
 
 const Restaurants = () => {
+  // "All" is already included here — don't spread it again when rendering.
   const categories = ["All", "Pizza", "Burger", "Fast Food", "Biryani"];
 
   const [selectedCategory, setSelectedCategory] = useState("All");
@@ -27,27 +32,25 @@ const Restaurants = () => {
 
   const filteredRestaurants = restaurants
     .filter((restaurant) => {
+      // Search by restaurant name or description
       const matchesSearch =
-        restaurant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        restaurant.description.toLowerCase().includes(searchTerm.toLowerCase());
+        restaurant.name.toLowerCase().includes(searchTerm?.toLowerCase()) ||
+        restaurant.description.toLowerCase().includes(searchTerm?.toLowerCase());
 
+      // Filter by category
       const matchesCategory =
-        selectedCategory === "All" || restaurant.description === selectedCategory;
+        selectedCategory === "All" ||
+        restaurant.name.toLowerCase().includes(selectedCategory?.toLowerCase()) || 
+        restaurant.description.toLowerCase().includes(selectedCategory?.toLowerCase());
 
       return matchesSearch && matchesCategory;
     })
     .sort((a, b) => {
-      if (sortBy === "rating") {
-        return b.rating - a.rating;
-      }
+      if (sortBy === "rating") return b.rating - a.rating;
 
-      if (sortBy === "time") {
-        return parseInt(a.time) - parseInt(b.time);
-      }
+      if (sortBy === "time") return parseInt(a.time) - parseInt(b.time);
 
-      if (sortBy === "name") {
-        return a.name.localeCompare(b.name);
-      }
+      if (sortBy === "name") return a.name.localeCompare(b.name);
 
       return 0;
     });
@@ -77,7 +80,10 @@ const Restaurants = () => {
           animate="show"
           variants={stagger(0.1)}
         >
-          <motion.h1 variants={fadeUp} className="text-5xl font-black text-gray-800">
+          <motion.h1
+            variants={fadeUp}
+            className="text-5xl font-black text-gray-800"
+          >
             🍽️ Explore Restaurants
           </motion.h1>
 
@@ -103,6 +109,7 @@ const Restaurants = () => {
             />
 
             <motion.button
+              type="button"
               whileHover={{ scale: 1.08 }}
               whileTap={{ scale: 0.92 }}
               className="absolute right-3 top-1/2 flex h-10 w-10 -translate-y-1/2 items-center justify-center rounded-xl bg-orange-500 text-white shadow-lg"
@@ -127,25 +134,29 @@ const Restaurants = () => {
               return (
                 <motion.button
                   key={category}
+                  type="button"
                   onClick={() => setSelectedCategory(category)}
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
-                  className={`relative rounded-full px-5 py-2 font-semibold transition-colors ${
+                  className={`relative overflow-hidden rounded-full px-5 py-2 font-semibold transition-colors ${
                     isSelected
                       ? "text-white"
                       : "border border-gray-300 bg-white hover:bg-orange-500 hover:text-white"
                   }`}
                 >
-                  {/* layoutId lets the orange pill glide between buttons
-                      instead of popping between them instantly. */}
                   {isSelected && (
                     <motion.span
                       layoutId="categoryPill"
                       className="absolute inset-0 rounded-full bg-orange-500"
-                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                      transition={{
+                        type: "spring",
+                        stiffness: 350,
+                        damping: 30,
+                      }}
                     />
                   )}
-                  <span className="relative">{category}</span>
+
+                  <span className="relative z-10">{category}</span>
                 </motion.button>
               );
             })}
@@ -165,10 +176,14 @@ const Restaurants = () => {
         </motion.div>
 
         {/* Restaurant Cards */}
-        <motion.div layout className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-2">
+        <motion.div
+          layout
+          className="mt-14 grid gap-8 md:grid-cols-2 lg:grid-cols-2"
+        >
+          <AnimatePresence mode="popLayout">
             {filteredRestaurants.length > 0 ? (
               filteredRestaurants.map((restaurant) => (
-                <div
+                <motion.div
                   key={restaurant._id}
                   layout
                   initial={{ opacity: 0, y: 20 }}
@@ -177,7 +192,7 @@ const Restaurants = () => {
                   transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                 >
                   <RestaurantCard restaurant={restaurant} />
-                </div>
+                </motion.div>
               ))
             ) : (
               <motion.div
@@ -196,6 +211,7 @@ const Restaurants = () => {
                 </p>
               </motion.div>
             )}
+          </AnimatePresence>
         </motion.div>
       </div>
     </div>
