@@ -1,34 +1,38 @@
 # 🍔 NextBite - Food Delivery App
 
 <p align="center">
-  <b>A Modern Full Stack Food Delivery Web Application</b><br>
-  Built with React, Node.js, Express.js, and MongoDB.
+  <h3 align="center">A Modern Full Stack Food Delivery Web Application</h3>
+  <p align="center">
+    Built with React, Redux Toolkit, Node.js, Express.js, and MongoDB
+  </p>
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/Frontend-React-blue?logo=react" />
-  <img src="https://img.shields.io/badge/Backend-Node.js-green?logo=node.js" />
-  <img src="https://img.shields.io/badge/Database-MongoDB-success?logo=mongodb" />
+  <img src="https://img.shields.io/badge/Frontend-React-61DAFB?logo=react&logoColor=white" />
+  <img src="https://img.shields.io/badge/Backend-Node.js-339933?logo=node.js&logoColor=white" />
+  <img src="https://img.shields.io/badge/Database-MongoDB-47A248?logo=mongodb&logoColor=white" />
   <img src="https://img.shields.io/badge/License-Educational-orange" />
 </p>
 
 ---
 
-## 📖 About
+# 📖 About
 
-**NextBite** is a modern **Full Stack Food Delivery Web Application** inspired by popular food delivery platforms like **Swiggy** and **Zomato**. The application provides a seamless experience for **Customers**, **Restaurant Owners**, and **Administrators** with role-based access, responsive design, secure authentication, and an intuitive user interface.
+**NextBite** is a modern **Full Stack Food Delivery Web Application** designed to provide a seamless food ordering experience for **Customers**, **Restaurant Owners**, and **Administrators**.
+
+The application features secure authentication, role-based authorization, restaurant management, online ordering, payment integration, live order tracking, coupon support, reviews & ratings, and a responsive user interface for all devices.
 
 ---
 
-## 🌐 Live Demo
+# 🌐 Live Demo
 
-🚀 **Live Website**
+### 🚀 Live Website
 
 https://next-bite-food-delivery-app.vercel.app/
 
 ---
 
-## 📂 GitHub Repository
+# 📂 GitHub Repository
 
 https://github.com/Ayushverma1238/NextBite-Food-Delivery-App
 
@@ -43,12 +47,16 @@ https://github.com/Ayushverma1238/NextBite-Food-Delivery-App
 - Search Restaurants
 - Filter Restaurants
 - Restaurant Details
-- Add & Remove Items from Cart
+- Shopping Cart
 - Wishlist Management
-- Checkout
+- Secure Checkout
+- Razorpay Payment Integration
+- Live Order Tracking
 - Order History
-- User Profile
-- Responsive UI
+- Restaurant Reviews & Ratings
+- Coupon & Discount Support
+- User Profile Management
+- Responsive User Interface
 
 ---
 
@@ -57,8 +65,10 @@ https://github.com/Ayushverma1238/NextBite-Food-Delivery-App
 - Owner Dashboard
 - Restaurant Management
 - Food Management
+- Menu Management
 - Order Management
-- Analytics
+- Order Status Updates
+- Sales Analytics
 - Profile & Settings
 
 ---
@@ -69,12 +79,14 @@ https://github.com/Ayushverma1238/NextBite-Food-Delivery-App
 - User Management
 - Restaurant Management
 - Category Management
+- Food Management
 - Order Management
 - Reports & Analytics
+- Platform Monitoring
 
 ---
 
-# 🛠 Tech Stack
+# 🛠️ Tech Stack
 
 ## Frontend
 
@@ -82,7 +94,7 @@ https://github.com/Ayushverma1238/NextBite-Food-Delivery-App
 - Vite
 - Tailwind CSS
 - React Router DOM
-- Context API
+- Redux Toolkit
 - Axios
 - React Toastify
 - React Icons
@@ -97,6 +109,9 @@ https://github.com/Ayushverma1238/NextBite-Food-Delivery-App
 - Mongoose
 - JWT Authentication
 - bcrypt.js
+- Cloudinary
+- Multer
+- Razorpay
 - dotenv
 - CORS
 
@@ -107,9 +122,9 @@ https://github.com/Ayushverma1238/NextBite-Food-Delivery-App
 ```text
 NextBite-Food-Delivery-App
 │
-├── backend
+├── backend/
 │
-├── frontend
+├── frontend/
 │
 └── README.md
 ```
@@ -148,12 +163,13 @@ npm start
 
 ---
 
-# 🔐 Authentication
+# 🔐 Authentication & Security
 
 - JWT Authentication
 - Password Encryption using bcrypt
 - Protected Routes
 - Role-Based Authorization
+- Secure REST APIs
 
 ---
 
@@ -161,12 +177,16 @@ npm start
 
 - Modern Responsive UI
 - RESTful API Integration
+- Redux Toolkit State Management
+- Secure JWT Authentication
+- Razorpay Payment Gateway
+- Live Order Tracking
+- Reviews & Ratings
+- Coupon & Discount System
 - Role-Based Dashboards
-- Secure Authentication
 - CRUD Operations
-- Global State Management
-- Clean Folder Structure
 - Reusable React Components
+- Clean Folder Structure
 
 ---
 
@@ -183,12 +203,12 @@ npm start
 
 # 🔮 Future Enhancements
 
-- Online Payment Gateway
-- Live Order Tracking
-- Push Notifications
-- Restaurant Reviews & Ratings
 - AI-Based Food Recommendations
-- Coupon & Discount System
+- Personalized Restaurant Suggestions
+- Push Notifications
+- Multi-language Support
+- Progressive Web App (PWA)
+- Voice-Based Food Search
 
 ---
 
@@ -202,7 +222,7 @@ This project is developed for **Educational and Learning Purposes**.
 
 If you found this project helpful, please consider giving it a ⭐ on GitHub.
 
-It motivates us to build more amazing projects.
+Your support motivates us to build more amazing projects.
 
 ---
 
