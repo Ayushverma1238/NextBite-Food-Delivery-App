@@ -88,8 +88,8 @@ function Home() {
               offers and fresh meals every day.
             </motion.p>
 
-            <motion.button 
-            onClick={()=> navigate('/restaurant')}
+            <motion.button
+              onClick={() => navigate('/restaurants')}
               variants={fadeUp}
               whileHover={{ scale: 1.05, boxShadow: "0 12px 30px -8px rgba(249,115,22,0.55)" }}
               whileTap={{ scale: 0.97 }}
