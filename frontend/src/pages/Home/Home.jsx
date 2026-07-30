@@ -3,6 +3,7 @@ import { motion } from "framer-motion";
 import RestaurantCard from "../../components/restaurant/RestaurantCard";
 import axiosInstance from "../../api/axios";
 import CategoryGrid from "../CategoryFood/CategoryGrid";
+import { useNavigate } from "react-router-dom";
 
 // Reusable motion presets — keep them in one place so every section
 // animates in with the same rhythm instead of scattered one-off effects.
@@ -22,7 +23,7 @@ const sectionViewport = { once: true, margin: "-80px" };
 
 function Home() {
   const [restaurants, setRestaurants] = useState([]);
-
+  const navigate = useNavigate()
   useEffect(() => {
     const details = async () => {
       try {
@@ -87,7 +88,8 @@ function Home() {
               offers and fresh meals every day.
             </motion.p>
 
-            <motion.button
+            <motion.button 
+            onClick={()=> navigate('/restaurant')}
               variants={fadeUp}
               whileHover={{ scale: 1.05, boxShadow: "0 12px 30px -8px rgba(249,115,22,0.55)" }}
               whileTap={{ scale: 0.97 }}

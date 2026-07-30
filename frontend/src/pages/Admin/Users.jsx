@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../api/axios";
 import { FiSearch, FiTrash2, FiLock, FiUnlock } from "react-icons/fi";
-
+import toast from 'react-toastify'
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -37,6 +37,8 @@ const Users = () => {
       </div>
     );
   }
+
+
 
   return (
     <div className="space-y-8">
@@ -135,6 +137,7 @@ const Users = () => {
                   <td className="px-6 py-4">
                     <div className="flex justify-center gap-3">
                       <button
+                      onClick={()=> blockUser(user?._id)}
                         className={`flex items-center gap-2 rounded-lg px-4 py-2 text-white transition ${
                           user.isBlocked
                             ? "bg-green-500 hover:bg-green-600"
@@ -154,7 +157,9 @@ const Users = () => {
                         )}
                       </button>
 
-                      <button className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-white transition hover:bg-red-600">
+                      <button
+                      onClick={() => handleDelete(user?._id)}
+                      className="flex items-center gap-2 rounded-lg bg-red-500 px-4 py-2 text-white transition hover:bg-red-600">
                         <FiTrash2 />
                         Delete
                       </button>
