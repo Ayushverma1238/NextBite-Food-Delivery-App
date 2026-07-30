@@ -1,7 +1,6 @@
 import { useEffect, useState } from "react";
 import axiosInstance from "../../api/axios";
 import { FiSearch, FiTrash2, FiLock, FiUnlock } from "react-icons/fi";
-import toast from 'react-toastify'
 const Users = () => {
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
